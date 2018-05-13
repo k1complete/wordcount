@@ -9,8 +9,8 @@ defmodule Wordcount do
   
   Example:
 
-      iex> Wordcount.solve1("example")
-      [{"", 1}, {"This", 1}, {"a", 2}, {"example", 1}, {"file.", 1},
+      iex> Wordcount.solve1("example_test") |> Enum.sort()
+      [{"This", 1}, {"a", 2}, {"example", 1}, {"file.", 1},
        {"is", 2}, {"sample.", 1}, {"this", 1}]
 
   """
@@ -117,5 +117,18 @@ defmodule Wordcount do
     :fprof.apply(mod, func, [@afile])
     :fprof.profile()
     :fprof.analyse()
+  end
+  def measures() do
+    m = fn(s, f) ->
+      a = System.system_time; 
+      apply(Wordcount, s, ["example#{f}"])
+      b = System.system_time; 
+      IO.inspect [s, f, b - a]
+      {:method, s, :size, f, :msec, :erlang.convert_time_unit(b - a, :native, :microsecond)}
+    end
+    ret = for x <- 0..5, f <- ["", "_1m", "_100k", "_10k", "_1k"] do
+        m.(:"solve#{x}", f)
+    end
+    IO.inspect ret
   end
 end

@@ -89,10 +89,65 @@ Streamは強力で多用されるが、まだ問題点が残っている。
 これを行うビヘイビアがGenStageで、それをStreamへ適用したのがFlowとなる。
 
 ## 測定コーナー
-  
+
+input file: example.gz
+line:    4,280,614
+word:   19,938,949
+char:  134,666,830
+
 solve0 311
 solve1 361
 solve2 173
 solve3 64
 solve4 56
 solve5 22
+
+[{:method, :solve0, :size, "", :msec, 301437683},
+ {:method, :solve0, :size, "_1m", :msec, 39063220},
+ {:method, :solve0, :size, "_100k", :msec, 2885465},
+ {:method, :solve0, :size, "_10k", :msec, 157585},
+ {:method, :solve0, :size, "_1k", :msec, 7918},
+ {:method, :solve1, :size, "", :msec, 297628128},
+ {:method, :solve1, :size, "_1m", :msec, 37075575},
+ {:method, :solve1, :size, "_100k", :msec, 2832625},
+ {:method, :solve1, :size, "_10k", :msec, 165490},
+ {:method, :solve1, :size, "_1k", :msec, 7204},
+ {:method, :solve2, :size, "", :msec, 157497579},
+ {:method, :solve2, :size, "_1m", :msec, 35987245},
+ {:method, :solve2, :size, "_100k", :msec, 1437536},
+ {:method, :solve2, :size, "_10k", :msec, 120952},
+ {:method, :solve2, :size, "_1k", :msec, 8398},
+ {:method, :solve3, :size, "", :msec, 57132489},
+ {:method, :solve3, :size, "_1m", :msec, 13193480},
+ {:method, :solve3, :size, "_100k", :msec, 1456387},
+ {:method, :solve3, :size, "_10k", :msec, 132689},
+ {:method, :solve3, :size, "_1k", :msec, 15394},
+ {:method, :solve4, :size, "", :msec, 58212160},
+ {:method, :solve4, :size, "_1m", :msec, 11269317},
+ {:method, :solve4, :size, "_100k", :msec, 1274524},
+ {:method, :solve4, :size, "_10k", :msec, 121054},
+ {:method, :solve4, :size, "_1k", :msec, 17902},
+ {:method, :solve5, :size, "", :msec, 22571693},
+ {:method, :solve5, :size, "_1m", :msec, 6884290},
+ {:method, :solve5, :size, "_100k", :msec, 980041},
+ {:method, :solve5, :size, "_10k", :msec, 93040},
+ {:method, :solve5, :size, "_1k", :msec, 16682}]
+
+## 計算に対する研究と実務
+
+アルゴリズムに関する研究はコンピュータの発明以前からされてきていた。そ
+の中で既に万能テューリングマシンや計算可能性に関する研究の成果が認識さ
+れていた。停止性問題は1936年にテューリングによって証明されている。
+
+一方、ノイマンらによって発明されたストアドプログラム方式のコンピュータ
+は機械語によるプログラミングから始まり、軌道計算や事務処理のために使わ
+れて来た。
+世界初のコンパイラはバッカスによる1957年のFORTRANとされている。
+COBOLを発明したのが優美なバッタだったが、そのコンパイラが動かなかったた
+め、バグと呼ばれるようになった。(本当はグレースホッパー氏が1944年頃マー
+クIIと呼ばれたリレー式コンピュータ開発時にリレーに蛾が挟まって動かなく
+なったことを「実際にバグがみつかった初めての例」と日誌に書き込んだ故事
+に基く。何れにしてもコンピュータ発明以前から電気関係の不具合をバグと呼
+んでいた)
+
+
