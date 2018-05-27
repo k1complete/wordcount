@@ -6,7 +6,8 @@ defmodule Factor.Listener do
   end
   @port 30000
   def init(_state) do
-    {:ok, port} = :gen_tcp.listen(@port, [])
+    {:ok, port} = :gen_tcp.listen(@port, [{:active, :true}, 
+                                          {:reuseaddr, :true}])
     :error_logger.info_report(port)
     {:ok, port}
   end
@@ -21,16 +22,17 @@ defmodule Factor.Listener do
     :error_logger.info_report({:listener1, :closed, port})
     ret = Supervisor.terminate_child(:factor_sup, port)
     :error_logger.info_report({:listener, :closed, ret})
-
+    {:noreply, state}
   end
-  def handle_cast({:accepted, pid, port, :factor_sup, facter}, state) do
-    ret = connect(pid, port)
+  def handle_cast({:accepted, worker_pid, port, master, factor}, state) do
+    :inet.setopts(port, [{:packet, :line}, :binary])
+    :ok = :gen_tcp.controlling_process(port, worker_pid)
     {:noreply, state}
   end
   def handle_cast({:accept, super_ref, accepted}, state) do
     :error_logger.info_report(:accept)
     {:ok, port} = :gen_tcp.accept(state)
-    apply(accepted, [super_ref, port])
+    apply(accepted, [super_ref, port]) 
     {:noreply, state}
   end
   def handle_info(n, state) do

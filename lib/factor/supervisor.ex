@@ -5,8 +5,9 @@ defmodule Factor.Supervisor do
   def start_link(arg) do
     IO.inspect [arg]
     {:ok, ret} = Supervisor.start_link(__MODULE__, arg)
-    r = :supervisor.get_childspec(ret, arg)
-    IO.inspect [__MODULE__, r]
+    IO.inspect [supervisor: ret]
+#    r = :supervisor.get_childspec(ret, arg)
+#    IO.inspect [__MODULE__, r]
     {:ok, ret}
   end
   def init(a) do
