@@ -1,4 +1,4 @@
-defmodule Factor.Supervisor do
+defmodule TcpServer.Supervisor do
 #  use Supervisor
   use Supervisor
   import Supervisor.Spec
@@ -17,7 +17,7 @@ defmodule Factor.Supervisor do
            []}}
   end
   def start_child({listener, port, sup_ref, master}) do
-    childspec = {{port, FactorServer},
+    childspec = {{port, Factor.Server},
                   {Factor.Server, :start_link, [{}]},
                   :temporary,
                   100_000,
@@ -25,12 +25,12 @@ defmodule Factor.Supervisor do
                   [Factor.Server]}
     {:ok, factor} = Supervisor.start_child(sup_ref, childspec)
     args = {listener, port, sup_ref, master, factor}
-    childspec = {{port, Factor.TcpServer},
-                  {Factor.TcpServer, :start_link, [args]},
+    childspec = {{port, Factor.UserSession},
+                  {Factor.UserSession, :start_link, [args]},
                   :temporary,
                   100_000,
                   :worker,
-                  [Factor.TcpServer]}
+                  [Factor.UserSession]}
     {:ok, tcp} = Supervisor.start_child(sup_ref, childspec)
     :ok
   end

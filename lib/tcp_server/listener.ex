@@ -1,4 +1,4 @@
-defmodule Factor.Listener do
+defmodule TcpServer.Listener do
   use GenServer
 
   def start_link(state, opts \\ []) do
@@ -6,8 +6,8 @@ defmodule Factor.Listener do
   end
   @port 30000
   def init(_state) do
-    {:ok, port} = :gen_tcp.listen(@port, [{:active, :true}, 
-                                          {:reuseaddr, :true}])
+    {:ok, port} = :gen_tcp.listen(@port, [{:active, :true}])
+##                                          {:reuseaddr, :true}])
     :error_logger.info_report(port)
     {:ok, port}
   end
@@ -24,14 +24,15 @@ defmodule Factor.Listener do
     :error_logger.info_report({:listener, :closed, ret})
     {:noreply, state}
   end
-  def handle_cast({:accepted, worker_pid, port, master, factor}, state) do
+  def handle_cast({:accepted, worker_pid, port, _master, _factor}, state) do
     :inet.setopts(port, [{:packet, :line}, :binary])
     :ok = :gen_tcp.controlling_process(port, worker_pid)
     {:noreply, state}
   end
   def handle_cast({:accept, super_ref, accepted}, state) do
-    :error_logger.info_report(:accept)
+    :error_logger.info_report({:accept, super_ref, accepted})
     {:ok, port} = :gen_tcp.accept(state)
+    :error_logger.info_report({:accept2, super_ref, accepted})
     apply(accepted, [super_ref, port]) 
     {:noreply, state}
   end

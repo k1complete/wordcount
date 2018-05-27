@@ -1,4 +1,4 @@
-defmodule Factor.TcpServer do
+defmodule Factor.UserSession do
   use GenServer
   def start_link({listener, port, parent, master, factor}, opts \\ []) do
     {:ok, pid} = GenServer.start_link(__MODULE__, {listener, port, parent, master, factor}, opts)
@@ -14,12 +14,12 @@ defmodule Factor.TcpServer do
             state: ""}}
   end
   def handle_info({:tcp_closed, port}, state) do
-    ret = Factor.Master.delete_child(state.master, state.port)
+    ret = TcpServer.Master.delete_child(state.master, state.port)
     {:noreply, state}
   end
 
   def handle_info({:tcp, port, "quit\r\n"}, state) do
-    ret = Factor.Master.delete_child(state.master, state.port)
+    ret = TcpServer.Master.delete_child(state.master, state.port)
     {:noreply, state}
   end
 
@@ -46,7 +46,7 @@ defmodule Factor.TcpServer do
   end
   def terminate(reason, state) do
     :error_logger.info_report({:terminate, reason, state})
-    Factor.Master.delete_child(state.master, state.port)
+    TcpServer.Master.delete_child(state.master, state.port)
     reason
   end
 end
