@@ -12,7 +12,6 @@ defmodule Factor.Server do
   def handle_call({:factor, [n]}, _from, state) do
     {:reply, calc_factor(n), state}
   end
-  @tag timeout: 360000
   @doc """
   calc factor
 

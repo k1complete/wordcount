@@ -6,14 +6,14 @@ defmodule TcpServer.Master do
     ret = Supervisor.start_link(__MODULE__, arg, [name: name])
     ret
   end
-  def init(%{supervisor: sup, name: name}) do
+  def init(%{supervisor: sup, name: _name}) do
     {:ok, {{:one_for_one,
             10,
             100},
            [
              worker(TcpServer.Listener, 
                [%{accepter: &__MODULE__.accepted/2,
-                 supervisor: name}, 
+                 supervisor: sup}, 
                 [name: :factor_listener]], 
                [id: :factor_listener])
     ]}}

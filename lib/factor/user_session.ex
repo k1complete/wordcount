@@ -19,13 +19,13 @@ defmodule Factor.UserSession do
     :ok = :inet.setopts(port, [active: :false])
     lpid = case is_atom(listener) do
              true -> :erlang.whereis(listener)
-             fale -> listener
+             false -> listener
            end
     :ok = :gen_tcp.controlling_process(port, lpid)
   end
-  def handle_cast({:setup, listener, pid, port, parent, master, factor}, state) do
+  def handle_cast({:setup, listener, pid, port, parent, _master, _factor}, state) do
     IO.inspect({:listener, listener})
-    ret = GenServer.call(listener, {:take_socket, port, pid})
+    :ok = GenServer.call(listener, {:take_socket, port, pid})
     :ok = :inet.setopts(port, [active: :true, mode: :binary, packet: :line])
     m = Supervisor.which_children(parent)
     :error_logger.info_report({:server2, m})
@@ -35,30 +35,22 @@ defmodule Factor.UserSession do
     {:noreply, state}
   end
   def handle_info({:tcp_closed, port}, state) do
-    ret = TcpServer.Master.delete_child(state.master, state.port)
+    :ok = TcpServer.Master.delete_child(state.master, port)
     {:noreply, state}
   end
 
   def handle_info({:tcp, port, "quit\r\n"}, state) do
-    ret = TcpServer.Master.delete_child(state.master, state.port)
+    :ok = TcpServer.Master.delete_child(state.master, port)
     {:noreply, state}
   end
 
   def handle_info({:tcp, port, s}, state) do
     :error_logger.info_report({:server2, s, port})
-    {ret, b} = Code.eval_string(s)
+    {ret, _b} = Code.eval_string(s)
     :error_logger.info_report({:server2, ret, state})
     ret = GenServer.call(state.server, {:factor, [ret]}, 300)
     :error_logger.info_report({:server, {s}, ret})
     :gen_tcp.send(port, :io_lib.format('~p\r\n', [ret]))
-    {:noreply, state}
-  end
-  def handle_info({:tcp, port, message}, state) do
-    :error_logger.info_report({:server, message})
-    {ret, b} = Code.eval_string(message)
-    :error_logger.info_report({:server, message, ret})
-    :gen_tcp.send(port, :io_lib.format('~p\r\nn', [ret]))
-    
     {:noreply, state}
   end
   def handle_info(a, state) do

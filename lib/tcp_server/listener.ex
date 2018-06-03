@@ -16,7 +16,7 @@ defmodule TcpServer.Listener do
   end
   def connect(child, port) do
     case :gen_tcp.controlling_process(port, child) do
-      :ok -> :error_logger.info_report({"ok", port, child, self})
+      :ok -> :error_logger.info_report({"ok", port, child, self()})
         :ok
       x -> :error_logger.info_report(x)
     end

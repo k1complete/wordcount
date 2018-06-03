@@ -1,16 +1,14 @@
 defmodule TcpServer.Supervisor do
 #  use Supervisor
   use Supervisor
-  import Supervisor.Spec
+#  import Supervisor.Spec
   def start_link(arg) do
     IO.inspect [arg]
     {:ok, ret} = Supervisor.start_link(__MODULE__, arg)
     IO.inspect [supervisor: ret]
-#    r = :supervisor.get_childspec(ret, arg)
-#    IO.inspect [__MODULE__, r]
     {:ok, ret}
   end
-  def init(a) do
+  def init(_a) do
     {:ok, {{:one_for_all,
             10,
             100},
