@@ -11,7 +11,7 @@ defmodule TcpServer.Supervisor do
     {:ok, ret}
   end
   def init(a) do
-    {:ok, {{:rest_for_one,
+    {:ok, {{:one_for_all,
             10,
             100},
            []}}
@@ -19,19 +19,21 @@ defmodule TcpServer.Supervisor do
   def start_child({listener, port, sup_ref, master}) do
     childspec = {{port, Factor.Server},
                   {Factor.Server, :start_link, [{}]},
-                  :temporary,
+                  :transient,
                   100_000,
                   :worker,
                   [Factor.Server]}
     {:ok, factor} = Supervisor.start_child(sup_ref, childspec)
-    args = {listener, port, sup_ref, master, factor}
+    args = {listener, port, sup_ref, master, {port, Factor.Server}}
     childspec = {{port, Factor.UserSession},
                   {Factor.UserSession, :start_link, [args]},
-                  :temporary,
+                  :transient,
                   100_000,
                   :worker,
                   [Factor.UserSession]}
     {:ok, tcp} = Supervisor.start_child(sup_ref, childspec)
+    :error_logger.info_report({:child, factor, tcp})
+
     :ok
   end
 end

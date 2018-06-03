@@ -6,6 +6,7 @@ defmodule Factor.Server do
     {:ok, pid}
   end
   def init(state) do
+    :error_logger.info_report({:factor, self()})
     {:ok, state}
   end
   def handle_call({:factor, [n]}, _from, state) do

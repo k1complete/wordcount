@@ -4,8 +4,8 @@ defmodule Factor do
     :ok = :application.start(:factor)
   end
   def start(_type, _args) do
-    ret = TcpServer.Master.start_link(:factor_sup, [])
-    TcpServer.Master.accept(:factor_sup)
+    ret = TcpServer.Master.start_link(:factor_sup, 
+      %{supervisor: :factor_sup})
     ret
   end
   def stop() do
