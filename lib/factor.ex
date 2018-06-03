@@ -5,7 +5,7 @@ defmodule Factor do
   end
   def start(_type, _args) do
     ret = TcpServer.Master.start_link(:factor_sup, 
-      %{supervisor: :factor_sup})
+      %{listener: :factor_listener})
     ret
   end
   def stop() do

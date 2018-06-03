@@ -11,7 +11,8 @@ defmodule TcpServer.Listener do
                                           {:reuseaddr, :true}])
     :error_logger.info_report(port)
     state = Map.put(state, :port, port)
-    GenServer.cast(state.name, {:accept, state.supervisor, state.accepter})
+    GenServer.cast(state.name, {:accept, state.supervisor, state.accepter, state.name})
+    :error_logger.info_report({:cast, state})
     {:ok, state}
   end
   def connect(child, port) do
@@ -21,13 +22,13 @@ defmodule TcpServer.Listener do
       x -> :error_logger.info_report(x)
     end
   end
-  def start_accepter(sup_pid, listener, listener_socket, accepter) do
+  def start_accepter(sup_pid, listener, listener_socket, accepter, listener_pid) do
     spawn_link(fn() ->
         case :gen_tcp.accept(listener_socket) do
           {:ok, socket} ->
             :ok = :gen_tcp.controlling_process(socket, :erlang.whereis(listener))
-            apply(accepter, [sup_pid, socket])
-            GenServer.cast(listener, {:accept, sup_pid, accepter})
+            apply(accepter, [sup_pid, socket, listener_pid])
+            GenServer.cast(listener, {:accept, sup_pid, accepter, listener_pid})
           {:error, :closed} ->
             :error_logger.info_report({:listener, :closed})
             exit({:error, :closed})
@@ -42,12 +43,12 @@ defmodule TcpServer.Listener do
   end
   def handle_cast({:closed, port}, state) do
     :error_logger.info_report({:listener1, :closed, port})
-    ret = Supervisor.terminate_child(:factor_sup, port)
+    ret = Supervisor.terminate_child(state.supervisor, port)
     :error_logger.info_report({:listener, :closed, ret})
     {:noreply, state}
   end
-  def handle_cast({:accept, super_ref, accepted}, state) do
-    start_accepter(super_ref, state.name, state.port, accepted)
+  def handle_cast({:accept, super_ref, accepted, listener}, state) do
+    start_accepter(super_ref, state.name, state.port, accepted, listener)
 #
 #    :error_logger.info_report({:accept, super_ref, accepted})
 #    {:ok, port} = :gen_tcp.accept(state)

@@ -1,7 +1,6 @@
 defmodule TcpServer.Supervisor do
-#  use Supervisor
   use Supervisor
-#  import Supervisor.Spec
+
   def start_link(arg) do
     IO.inspect [arg]
     {:ok, ret} = Supervisor.start_link(__MODULE__, arg)
@@ -15,23 +14,18 @@ defmodule TcpServer.Supervisor do
            []}}
   end
   def start_child({listener, port, sup_ref, master}) do
-    childspec = {{port, Factor.Server},
-                  {Factor.Server, :start_link, [{}]},
-                  :transient,
-                  100_000,
-                  :worker,
-                  [Factor.Server]}
+    childspec = worker(Factor.Server, [{}], 
+      [id: {port, Factor.Server},
+       restart: :transient,
+       shutdown: 100_000])
     {:ok, factor} = Supervisor.start_child(sup_ref, childspec)
     args = {listener, port, sup_ref, master, {port, Factor.Server}}
-    childspec = {{port, Factor.UserSession},
-                  {Factor.UserSession, :start_link, [args]},
-                  :transient,
-                  100_000,
-                  :worker,
-                  [Factor.UserSession]}
+    childspec = worker(Factor.UserSession, [args],
+      [id: {port, Factor.UserSession},
+       restart: :transient,
+       shutdown: 100_000])
     {:ok, tcp} = Supervisor.start_child(sup_ref, childspec)
     :error_logger.info_report({:child, factor, tcp})
-
     :ok
   end
 end
