@@ -11,7 +11,4 @@ defmodule Factor do
   def stop() do
     :application.stop(:factor)
   end
-  def stop(state) do
-    TcpServer.Master.stop(:application_stop, state)
-  end
 end

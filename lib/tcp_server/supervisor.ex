@@ -18,14 +18,14 @@ defmodule TcpServer.Supervisor do
       [id: {port, Factor.Server},
        restart: :transient,
        shutdown: 100_000])
-    {:ok, factor} = Supervisor.start_child(sup_ref, childspec)
+    {:ok, _factor} = Supervisor.start_child(sup_ref, childspec)
     args = {listener, port, sup_ref, master, {port, Factor.Server}}
     childspec = worker(Factor.UserSession, [args],
       [id: {port, Factor.UserSession},
        restart: :transient,
        shutdown: 100_000])
-    {:ok, tcp} = Supervisor.start_child(sup_ref, childspec)
-    :error_logger.info_report({:child, factor, tcp})
+    {:ok, _tcp} = Supervisor.start_child(sup_ref, childspec)
+    #:error_logger.info_report({:child, factor, tcp})
     :ok
   end
 end

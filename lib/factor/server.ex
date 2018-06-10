@@ -1,6 +1,9 @@
 defmodule Factor.Server do
   use GenServer
-
+  def start({}, opts \\ []) do
+    {:ok, pid} = GenServer.start(__MODULE__, {}, opts)
+    {:ok, pid}
+  end
   def start_link({}, opts \\ []) do
     {:ok, pid} = GenServer.start_link(__MODULE__, {}, opts)
     {:ok, pid}
@@ -54,4 +57,11 @@ defmodule Factor.Server do
         [n|a]
     end
   end
+  def stop(pid, reason \\ :shutdown) do
+    GenServer.stop(pid, reason)
+  end
+  def terminate(reason, state) do
+    :error_logger.info_report({:terminate, reason, self(), state})
+  end
 end
+

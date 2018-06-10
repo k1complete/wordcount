@@ -18,33 +18,26 @@ defmodule TcpServer.Master do
                [%{accepter: &__MODULE__.accepted/3,
                  supervisor: arg.name}, 
                 [name: arg.listener]], 
-               [id: arg.listener])
+               [id: arg.listener
+             ])
     ]}}
   end
 
   def accepted(super_ref, port, listener) do
     child = supervisor(TcpServer.Supervisor, 
       [{:factor_listener, port, super_ref}], 
-      [id: port])
-    {:ok, cid} = Supervisor.start_child(super_ref, child)
+      [id: port,
+       restart: :temporary])
+    {:ok, spid} = Supervisor.start_child(super_ref, child)
     :ok = TcpServer.Supervisor.start_child({listener, 
-                                            port, cid, super_ref})
+                                            port, spid, super_ref})
   end
-  defp accept(super_ref) do
-    GenServer.cast(:factor_listener, {:accept, super_ref, &TcpServer.Master.accepted/3})
-  end
-  def connect(super_ref, key) do
-    child = supervisor(TcpServer.Supervisor, [[], [name: key]], [id: key])
-    Supervisor.start_child(super_ref, child)
-  end
-  def delete_child(super_ref, child) do
-    Supervisor.terminate_child(super_ref, child)
-    Supervisor.delete_child(super_ref, child)
-  end
-  def stop(term, state) do
-    a = Supervisor.stop(term, state)
-    IO.inspect [stop: a]
-    a
+  
+#  defp accept(super_ref) do
+#    GenServer.cast(:factor_listener, {:accept, super_ref, &TcpServer.Master.accepted/3})
+#  end
+  def delete_child(super_ref, child, listener) do
+    GenServer.call(listener, {:delete_child, super_ref, child})
   end
   
 end

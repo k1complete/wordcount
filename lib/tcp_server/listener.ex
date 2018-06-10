@@ -12,61 +12,36 @@ defmodule TcpServer.Listener do
     :error_logger.info_report(port)
     state = Map.put(state, :port, port)
     GenServer.cast(state.name, {:accept, state.supervisor, state.accepter, state.name})
-    :error_logger.info_report({:cast, state})
+    #:error_logger.info_report({:cast, state})
     {:ok, state}
-  end
-  def connect(child, port) do
-    case :gen_tcp.controlling_process(port, child) do
-      :ok -> :error_logger.info_report({"ok", port, child, self()})
-        :ok
-      x -> :error_logger.info_report(x)
-    end
   end
   def start_accepter(sup_pid, listener, listener_socket, accepter, listener_pid) do
     spawn_link(fn() ->
-        case :gen_tcp.accept(listener_socket) do
-          {:ok, socket} ->
-            :ok = :gen_tcp.controlling_process(socket, :erlang.whereis(listener))
-            apply(accepter, [sup_pid, socket, listener_pid])
-            GenServer.cast(listener, {:accept, sup_pid, accepter, listener_pid})
-          {:error, :closed} ->
-            :error_logger.info_report({:listener, :closed})
-            exit({:error, :closed})
-          x ->
-            :error_logger.info_report({:listener, x})
-        end
+      {:ok, socket} = :gen_tcp.accept(listener_socket)
+      :ok = :gen_tcp.controlling_process(socket, :erlang.whereis(listener))
+      apply(accepter, [sup_pid, socket, listener_pid])
+      GenServer.cast(listener, {:accept, sup_pid, accepter, listener_pid})
     end)
+  end
+  def handle_cast({:accept, super_ref, accepted, listener}, state) do
+    start_accepter(super_ref, state.name, state.port, accepted, listener)
+    {:noreply, state}
   end
   def handle_call({:take_socket, socket, pid}, _from, state) do
     ret = :gen_tcp.controlling_process(socket, pid)
     {:reply, ret, state}
   end
-  def handle_cast({:closed, port}, state) do
-    :error_logger.info_report({:listener1, :closed, port})
-    ret = Supervisor.terminate_child(state.supervisor, port)
-    :error_logger.info_report({:listener, :closed, ret})
-    {:noreply, state}
+  def handle_call({:delete_child, super_ref, child_id}, _from, state) do
+    :error_logger.info_report({:master_delete_child0, super_ref, child_id})
+    ret1 = Supervisor.terminate_child(super_ref, child_id)
+    :error_logger.info_report({:master_delete_child1, super_ref, child_id, ret1})
+    ret2 = Supervisor.delete_child(super_ref, child_id)
+    :error_logger.info_report({:master_delete_child2, super_ref, child_id, ret2})
+    {:reply, {:ok, ret1, ret2}, state}
   end
-  def handle_cast({:accept, super_ref, accepted, listener}, state) do
-    start_accepter(super_ref, state.name, state.port, accepted, listener)
-#
-#    :error_logger.info_report({:accept, super_ref, accepted})
-#    {:ok, port} = :gen_tcp.accept(state)
-#    :error_logger.info_report({:accept2, super_ref, accepted})
-#    apply(accepted, [super_ref, port]) 
-    {:noreply, state}
-  end
-  def handle_info({:tcp_closed, socket}, state) do
-    :error_logger.info_report({:listener, socket, state})
-    :gen_tcp.close(socket)
-    {:noreply,  state}
-  end
-  def handle_info(n, state) do
-    :error_logger.info_report({:listener, n, state})
-    {:noreply,  state}
-  end
-  def terminate(reason, state) do
-    :error_logger.info_report({:terminate, reason, state})
-    reason
+  def save_socket(port, listener) when is_atom(listener) do
+    :ok = :inet.setopts(port, [active: :false])
+    lpid = :erlang.whereis(listener)
+    :ok = :gen_tcp.controlling_process(port, lpid)
   end
 end

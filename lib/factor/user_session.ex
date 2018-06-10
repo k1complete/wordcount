@@ -1,13 +1,14 @@
 defmodule Factor.UserSession do
   use GenServer
+  @spec start_link(term, term):: {:ok, pid} | no_return()
   def start_link({listener, port, parent, master, factor}, opts \\ []) do
     {:ok, pid} = GenServer.start_link(__MODULE__, {listener, port, parent, master, factor}, opts)
     {:ok, pid}
   end
   def init({listener, port, parent, master, factor}) do
-    :error_logger.info_report({:us, {listener, port, parent, factor}})
+    #:error_logger.info_report({:us, {listener, port, parent, factor}})
     :ok = GenServer.cast(self(),
-      {:setup, listener, self(), port, parent,  master, factor})
+      {:setup, listener, self(), port, parent})
     {:ok, %{listener: listener, 
             port: port, 
             parent: parent, 
@@ -15,59 +16,44 @@ defmodule Factor.UserSession do
             server: factor, 
             state: ""}}
   end
-  def save_socket(port, listener) do
-    :ok = :inet.setopts(port, [active: :false])
-    lpid = case is_atom(listener) do
-             true -> :erlang.whereis(listener)
-             false -> listener
-           end
-    :ok = :gen_tcp.controlling_process(port, lpid)
-  end
-  def handle_cast({:setup, listener, pid, port, parent, _master, _factor}, state) do
-    IO.inspect({:listener, listener})
+  @spec handle_cast(command :: tuple, state :: any) :: {:norelply, any}
+  def handle_cast({:setup, listener, pid, port, parent}, state) do
     :ok = GenServer.call(listener, {:take_socket, port, pid})
     :ok = :inet.setopts(port, [active: :true, mode: :binary, packet: :line])
     m = Supervisor.which_children(parent)
-    :error_logger.info_report({:server2, m})
     [m2] = Enum.filter(m, fn(e) -> elem(e, 0) == state.server end)
-    :error_logger.info_report({:server2, m2})
     state = Map.put(state, :server, elem(m2, 1))
     {:noreply, state}
   end
+  @spec handle_info(command :: tuple, state :: any) :: {:norelply, any}
   def handle_info({:tcp_closed, port}, state) do
-    :ok = TcpServer.Master.delete_child(state.master, port)
+    :ok = TcpServer.Master.delete_child(state.master, port, state.listener)
     {:noreply, state}
   end
-
   def handle_info({:tcp, port, "quit\r\n"}, state) do
-    :ok = TcpServer.Master.delete_child(state.master, port)
+    :ok = TcpServer.Master.delete_child(state.master, port, state.listener)
     {:noreply, state}
   end
-
   def handle_info({:tcp, port, s}, state) do
-    :error_logger.info_report({:server2, s, port})
+    :error_logger.info_report({:server, s, port})
     {ret, _b} = Code.eval_string(s)
-    :error_logger.info_report({:server2, ret, state})
     ret = GenServer.call(state.server, {:factor, [ret]}, 300)
-    :error_logger.info_report({:server, {s}, ret})
+    #:error_logger.info_report({:server, {s}, ret})
     :gen_tcp.send(port, :io_lib.format('~p\r\n', [ret]))
     {:noreply, state}
   end
-  def handle_info(a, state) do
-    :error_logger.info_report({:server_other_info_ignore, a, state})
-    {:noreply, state}
-  end
+  @spec terminate(reason :: any, state :: any) :: any
   def terminate(reason, state) do
     :gen_tcp.send(state.port, "error\r\n")
     case elem(reason, 0) do
       :timeout ->
         :error_logger.info_report({:terminate, reason, 
                                    :erlang.is_pid(state.listener)})
-        :ok = save_socket(state.port, state.listener)
+        :ok = TcpServer.Listener.save_socket(state.port, state.listener)
         reason
       _ ->
-        :error_logger.info_report({:terminate, reason, state})
-        TcpServer.Master.delete_child(state.master, state.port)
+        :error_logger.warning_report({:terminate, reason, state})
+        TcpServer.Master.delete_child(state.master, state.port, state.listener)
     end
   end
 end

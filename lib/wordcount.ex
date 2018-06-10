@@ -5,11 +5,11 @@ defmodule Wordcount do
   """
 
   @doc """
-  Word count solve1
+  Word count solve0
   
   Example:
 
-      iex> Wordcount.solve1("example_test") |> Enum.sort()
+      iex> Wordcount.solve0("example_test") |> Enum.sort()
       [{"This", 1}, {"a", 2}, {"example", 1}, {"file.", 1},
        {"is", 2}, {"sample.", 1}, {"this", 1}]
 
@@ -27,6 +27,16 @@ defmodule Wordcount do
       end)
     Enum.to_list(result)
   end
+  @doc """
+  Word count solve1
+  
+  Example:
+
+      iex> Wordcount.solve1("example_test") |> Enum.sort()
+      [{"This", 1}, {"a", 2}, {"example", 1}, {"file.", 1},
+       {"is", 2}, {"sample.", 1}, {"this", 1}]
+
+  """
   def solve1(file) do
     File.read!(file)
     |> String.split("\n")
@@ -38,16 +48,37 @@ defmodule Wordcount do
        end)
     |> Enum.to_list()
   end
+  @doc """
+  Word count solve2
+  
+  Example:
+
+      iex> Wordcount.solve2("example_test") |> Enum.sort()
+      [{"This", 1}, {"a", 2}, {"example", 1}, {"file.", 1},
+       {"is", 2}, {"sample.", 1}, {"this", 1}]
+
+  """
   def solve2(file) do
     File.stream!(file)
     |> Stream.flat_map(fn(line) ->
          String.split(line, [" ", "\n"])
        end)
-    |> Enum.reduce(%{}, fn(word, acc) ->
-         Map.update(acc, word, 1, &(&1 + 1))
+    |> Enum.reduce(%{}, 
+       fn("", acc) ->  acc
+         (word, acc) -> Map.update(acc, word, 1, &(&1 + 1))
        end)
     |> Enum.to_list()
   end
+  @doc """
+  Word count solve3
+  
+  Example:
+
+      iex> Wordcount.solve3("example_test") |> Enum.sort()
+      [{"This", 1}, {"a", 2}, {"example", 1}, {"file.", 1},
+       {"is", 2}, {"sample.", 1}, {"this", 1}]
+
+  """
   def solve3(file) do
     File.stream!(file)
     |> Flow.from_enumerable()
@@ -55,11 +86,22 @@ defmodule Wordcount do
          for word <- String.split(line, [" ", "\n"]), do: word
        end)
     |> Flow.partition()
-    |> Flow.reduce(fn() -> %{} end, fn(word, acc) ->
-         Map.update(acc, word, 1, &(&1 + 1))
+    |> Flow.reduce(fn() -> %{} end, 
+       fn("", acc) ->  acc
+         (word, acc) -> Map.update(acc, word, 1, &(&1 + 1))
        end)
     |> Enum.to_list()
   end
+  @doc """
+  Word count solve4
+  
+  Example:
+
+      iex> Wordcount.solve4("example_test") |> Enum.sort()
+      [{"This", 1}, {"a", 2}, {"example", 1}, {"file.", 1},
+       {"is", 2}, {"sample.", 1}, {"this", 1}]
+
+  """
   def solve4(file) do
     pattern = :binary.compile_pattern([" ", "\n"])
     File.stream!(file)
@@ -68,11 +110,22 @@ defmodule Wordcount do
          for word <- String.split(line, pattern), do: word
        end)
     |> Flow.partition()
-    |> Flow.reduce(fn() -> %{} end, fn(word, acc) ->
-         Map.update(acc, word, 1, &(&1 + 1))
+    |> Flow.reduce(fn() -> %{} end, 
+       fn("", acc) ->  acc
+         (word, acc) -> Map.update(acc, word, 1, &(&1 + 1))
        end)
     |> Enum.to_list()
   end
+  @doc """
+  Word count solve5
+  
+  Example:
+
+      iex> Wordcount.solve5("example_test") |> Enum.sort()
+      [{"This", 1}, {"a", 2}, {"example", 1}, {"file.", 1},
+       {"is", 2}, {"sample.", 1}, {"this", 1}]
+
+  """
   def solve5(file) do
     parent = self()
     pattern = :binary.compile_pattern([" ", "\n"])
@@ -82,28 +135,11 @@ defmodule Wordcount do
          for word <- String.split(line, pattern), do: word
        end)
     |> Flow.partition()
-    |> Flow.reduce(fn() -> :ets.new(:words, []) end, fn(word, ets) ->
-         :ets.update_counter(ets, word, {2, 1}, {word, 0})
-         ets
-       end)
-    |> Flow.map_state(fn(ets) ->
-         :ets.give_away(ets, parent, [])
-         [ets]
-       end)
-    |> Enum.flat_map(&(:ets.tab2list(&1)))
-  end
-  def solve6(file) do
-    parent = self()
-    pattern = :binary.compile_pattern([" ", "\n"])
-    File.stream!(file)
-    |> Flow.from_enumerable()
-    |> Flow.flat_map(fn(line) ->
-         for word <- String.split(line, pattern), do: word
-       end)
-    |> Flow.partition(window: Flow.Window.global)
-    |> Flow.reduce(fn() -> :ets.new(:words, []) end, fn(word, ets) ->
-         :ets.update_counter(ets, word, {2, 1}, {word, 0})
-         ets
+    |> Flow.reduce(fn() -> :ets.new(:words, []) end, 
+       fn("", ets) -> ets
+         (word, ets) ->
+           :ets.update_counter(ets, word, {2, 1}, {word, 0})
+           ets
        end)
     |> Flow.map_state(fn(ets) ->
          :ets.give_away(ets, parent, [])
