@@ -61,11 +61,10 @@ defmodule Wordcount do
   def solve2(file) do
     File.stream!(file)
     |> Stream.flat_map(fn(line) ->
-         String.split(line, [" ", "\n"])
+         String.split(line, [" ", "\n"], trim: true)
        end)
     |> Enum.reduce(%{}, 
-       fn("", acc) ->  acc
-         (word, acc) -> Map.update(acc, word, 1, &(&1 + 1))
+       fn(word, acc) -> Map.update(acc, word, 1, &(&1 + 1))
        end)
     |> Enum.to_list()
   end
@@ -83,12 +82,11 @@ defmodule Wordcount do
     File.stream!(file)
     |> Flow.from_enumerable()
     |> Flow.flat_map(fn(line) ->
-         for word <- String.split(line, [" ", "\n"]), do: word
+         for word <- String.split(line, [" ", "\n"], trim: true), do: word
        end)
     |> Flow.partition()
     |> Flow.reduce(fn() -> %{} end, 
-       fn("", acc) ->  acc
-         (word, acc) -> Map.update(acc, word, 1, &(&1 + 1))
+       fn(word, acc) -> Map.update(acc, word, 1, &(&1 + 1))
        end)
     |> Enum.to_list()
   end
@@ -107,12 +105,11 @@ defmodule Wordcount do
     File.stream!(file)
     |> Flow.from_enumerable()
     |> Flow.flat_map(fn(line) ->
-         for word <- String.split(line, pattern), do: word
+         for word <- String.split(line, pattern, trim: true), do: word
        end)
     |> Flow.partition()
     |> Flow.reduce(fn() -> %{} end, 
-       fn("", acc) ->  acc
-         (word, acc) -> Map.update(acc, word, 1, &(&1 + 1))
+       fn(word, acc) -> Map.update(acc, word, 1, &(&1 + 1))
        end)
     |> Enum.to_list()
   end
@@ -132,12 +129,11 @@ defmodule Wordcount do
     File.stream!(file)
     |> Flow.from_enumerable()
     |> Flow.flat_map(fn(line) ->
-         for word <- String.split(line, pattern), do: word
+         for word <- String.split(line, pattern, trim: true), do: word
        end)
     |> Flow.partition()
     |> Flow.reduce(fn() -> :ets.new(:words, []) end, 
-       fn("", ets) -> ets
-         (word, ets) ->
+       fn(word, ets) ->
            :ets.update_counter(ets, word, {2, 1}, {word, 0})
            ets
        end)
